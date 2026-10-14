@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ตารางภารกิจ รอง ผอก.ฝ่ายการแพทย์ คนที่ 2 วันนี้</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales-all.global.min.js'></script>
+
+  <style>
+    :root {
+      --bg: #F7F5F0;
+      --surface: #FFFFFF;
+      --ink: #22302D;
+      --ink-soft: #6E7A76;
+      --line: #E9E4D8;
+
+      --brand-dark: #0B5D57;
+      --brand: #12897E;
+      --brand-light: #4FBDAE;
+
+      --free: #2E9E5B;
+      --free-bg: #E7F6ED;
+      --light: #E0A31E;
+      --light-bg: #FCF3DD;
+      --busy: #D96456;
+      --busy-bg: #FBE9E6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 16px 10px 28px;
+      font-family: 'Prompt', sans-serif;
+      background-color: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+
+    /* ===== สรุปภารกิจวันนี้ (hero) ===== */
+    .today-box {
+      background: linear-gradient(120deg, var(--brand-dark), var(--brand) 65%, var(--brand-light));
+      color: white;
+      padding: 20px 22px;
+      border-radius: 22px;
+      box-shadow: 0 10px 26px rgba(11,93,87,0.28);
+    }
+    .today-box h3 { margin: 0 0 8px 0; font-size: 0.95em; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .today-date {
+      font-size: 1.2em;
+      font-weight: 600;
+      line-height: 1.3;
+      margin: 0 0 6px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.28);
+    }
+    .today-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.18); }
+    .today-item:last-child { border-bottom: none; }
+    .today-time { background: rgba(255,255,255,0.22); padding: 4px 11px; border-radius: 12px; font-size: 0.92em; font-weight: 600; min-width: 68px; text-align: center; flex-shrink: 0; }
+    .today-info { display: flex; flex-direction: column; gap: 3px; }
+    .today-title { font-size: 1em; font-weight: 600; line-height: 1.35; }
+    .today-location { font-size: 0.82em; opacity: 0.9; display: flex; align-items: center; gap: 4px; }
+    .no-event-today { margin: 0; font-weight: 300; opacity: 0.92; }
+
+    /* ===== กล่องวันว่างถัดไป (เด่น) ===== */
+    .free-box {
+      background: var(--free-bg);
+      padding: 12px 14px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(46,158,91,0.15);
+      border: 2px solid var(--free);
+    }
+    .free-box h3 { margin: 0 0 9px 0; font-size: 0.98em; font-weight: 700; color: #1F7A44; display: flex; align-items: center; gap: 7px; }
+    .free-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .free-chip {
+      background: var(--free);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 10px;
+      font-size: 0.85em;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .free-chip:hover { background: #258a4d; }
+    .no-free { color: var(--ink-soft); font-weight: 400; margin: 0; }
+
+    /* ===== ป้ายสีประเภทงาน ===== */
+    .legend-box {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding: 2px 2px 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8em; color: var(--ink-soft); white-space: nowrap; flex-shrink: 0; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ===== ช่องค้นหา ===== */
+    .search-box { position: relative; }
+    #searchInput {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 15px;
+      border: 1px solid var(--line);
+      font-family: 'Prompt', sans-serif;
+      font-size: 0.95em;
+      outline: none;
+      background: var(--surface);
+      color: var(--ink);
+    }
+    #searchInput:focus { border-color: var(--brand); }
+    #searchResults { display: none; position: absolute; top: 105%; left: 0; right: 0; background: var(--surface); border-radius: 15px; box-shadow: 0 10px 24px rgba(0,0,0,0.14); z-index: 999; max-height: 300px; overflow-y: auto; }
+    .search-item { padding: 12px 16px; display: flex; gap: 12px; align-items: center; cursor: pointer; border-bottom: 1px solid var(--line); }
+    .search-item:last-child { border-bottom: none; }
+    .search-item:hover { background: var(--bg); }
+    .search-date { color: var(--brand); font-weight: 600; font-size: 0.85em; min-width: 68px; flex-shrink: 0; }
+    .search-info { display: flex; flex-direction: column; gap: 2px; }
+    .search-title { font-size: 0.9em; }
+    .search-location { font-size: 0.78em; color: var(--ink-soft); }
+    .no-result { color: var(--ink-soft); cursor: default; }
+
+    /* ===== หัวข้อสรุปประจำเดือน ===== */
+    .month-heading {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--brand);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 1em;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--ink);
+    }
+    .month-heading:empty { display: none; }
+    .month-heading small { display: block; font-weight: 400; color: var(--ink-soft); font-size: 0.82em; margin-top: 2px; }
+
+    /* ===== ปฏิทิน ===== */
+    #calendar {
+      background: var(--surface);
+      padding: 16px;
+      border-radius: 20px;
+      box-shadow: 0 4px 16px rgba(34,48,45,0.06);
+    }
+    .fc .fc-toolbar-title { font-size: 1.15em; font-weight: 600; color: var(--ink); }
+    .fc .fc-button-primary {
+      background-color: transparent !important;
+      color: var(--brand) !important;
+      border: 1px solid var(--brand) !important;
+      border-radius: 20px !important;
+      font-family: 'Prompt', sans-serif;
+      padding: 4px 13px;
+      font-size: 0.85em;
+    }
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:hover {
+      background-color: var(--brand) !important;
+      color: #ffffff !important;
+    }
+    .fc-theme-standard td, .fc-theme-standard th { border-color: var(--line) !important; }
+    .fc-col-header-cell { background: var(--bg); }
+    .fc-daygrid-day-number { color: var(--ink-soft); font-size: 0.85em; }
+    .fc-day-today { background: var(--free-bg) !important; }
+
+    .fc-list-day-cushion { background-color: var(--bg) !important; font-weight: 600 !important; font-size: 1em !important; padding: 12px 15px !important; color: var(--ink); }
+    .fc-list-event { font-size: 1.02em; }
+    .fc-list-event-time { color: var(--brand) !important; font-weight: 600; width: 88px !important; }
+    .fc-list-event-title { padding: 12px !important; font-weight: 400; }
+    .fc-list-event-dot { border-color: var(--brand) !important; border-width: 6px !important; }
+    .fc-list-empty { font-size: 1.05em; color: var(--ink-soft); }
+
+    .fc-event {
+      cursor: pointer;
+      border-left: 4px solid var(--brand) !important;
+      background-color: #E6F4F2 !important;
+      color: var(--ink) !important;
+      border-radius: 5px;
+      padding: 3px 6px;
+      font-size: 0.83em;
+    }
+    .event-title-line { font-weight: 500; }
+    .event-location-line { font-size: 0.85em; opacity: 0.7; margin-top: 2px; }
+
+    /* ===== จุดสถานะความว่างบนปฏิทิน ===== */
+    .fc-daygrid-day-frame { position: relative; }
+    .day-status-dot { width: 6px; height: 6px; border-radius: 50%; position: absolute; top: 6px; right: 6px; }
+    .dot-free { background-color: var(--free); }
+    .dot-light { background-color: var(--light); }
+    .dot-busy { background-color: var(--busy); }
+
+    @media (max-width: 600px) {
+      body { padding: 12px 8px 24px; }
+      .today-box, .free-box { padding: 15px 16px; border-radius: 18px; }
+      .today-date { font-size: 1.05em; }
+      #calendar { padding: 10px 8px; border-radius: 16px; }
+      .fc .fc-toolbar { flex-direction: column; gap: 10px; }
+      .fc-list-event-time { width: 66px !important; font-size: 0.88em; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+
+    <div class="today-box">
+      <h3>📅 ภารกิจงานนัดหมาย รองมกร</h3>
+      <div class="today-date" id="today-date"></div>
+      <div id="today-events-list">กำลังโหลด...</div>
+    </div>
+
+    <div class="free-box">
+      <h3>🌿 วันว่าง ยังไม่มีนัดหมาย ลงนัดได้</h3>
+      <div id="free-days-list" class="free-chips">กำลังโหลด...</div>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍 ค้นหางาน เช่น ประชุม, ลงพื้นที่..." oninput="searchEvents()">
+      <div id="searchResults"></div>
+    </div>
+
+    <div class="legend-box" id="legendBox"></div>
+
+    <div class="month-heading" id="monthHeading"></div>
+
+    <div id='calendar'>
+      <h4 style="text-align:center; color:#999; font-weight: 300;">กำลังซิงค์ข้อมูล...</h4>
+    </div>
+
+  </div>
+
+  <script>
+    // *** วางลิงก์ Web App (ลงท้าย /exec) ที่ได้จาก Apps Script ตรงนี้ ***
+    var API_URL = 'PASTE_WEB_APP_URL_HERE';
+
+    var myCalendar;
+    var allEvents = [];
+
+    var CATEGORIES = [
+      { key: 'meeting',  match: ['ประชุม'],            label: 'ประชุม',        color: '#4F5FD6', bg: '#ECEEFB' },
+      { key: 'field',    match: ['ลงพื้นที่'],          label: 'ลงพื้นที่',      color: '#2E9E5B', bg: '#E7F6ED' },
+      { key: 'visit',    match: ['ตรวจเยี่ยม','เยี่ยม'], label: 'ตรวจเยี่ยม',    color: '#DB7F2E', bg: '#FDF0E1' },
+      { key: 'training', match: ['อบรม','สัมมนา'],      label: 'อบรม/สัมมนา',  color: '#A855C9', bg: '#F7EBFB' },
+      { key: 'other',    match: [],                     label: 'อื่นๆ',         color: '#12897E', bg: '#E6F4F2' }
+    ];
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+
+    function getCategory(title) {
+      title = title || '';
+      for (var i = 0; i < CATEGORIES.length - 1; i++) {
+        for (var j = 0; j < CATEGORIES[i].match.length; j++) {
+          if (title.indexOf(CATEGORIES[i].match[j]) > -1) return CATEGORIES[i];
+        }
+      }
+      return CATEGORIES[CATEGORIES.length - 1];
+    }
+
+    function renderLegend() {
+      var box = document.getElementById('legendBox');
+      var html = '';
+      CATEGORIES.forEach(function(cat) {
+        html += '<div class="legend-item"><span class="legend-dot" style="background:' + cat.color + '"></span>' + cat.label + '</div>';
+      });
+      box.innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+      var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+      renderLegend();
+      showTodayDate();
+
+      // ===== ดึงข้อมูลจาก Apps Script (ทำหน้าที่เป็น API) =====
+      if (!API_URL || API_URL.indexOf('PASTE') === 0) {
+        showLoadError('ยังไม่ได้ใส่ลิงก์ API — แก้ค่า API_URL ในไฟล์ index.html');
+        return;
+      }
+
+      fetch(API_URL)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (!Array.isArray(data)) throw new Error((data && data.error) || 'รูปแบบข้อมูลไม่ถูกต้อง');
+          return data;
+        })
+        .then(function(events) {
+          allEvents = events;
+          renderTodaySummary(events);
+          renderFreeDays(events);
+
+          calendarEl.innerHTML = '';
+
+          myCalendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: isMobile ? 'listMonth' : 'dayGridMonth',
+            locale: 'th',
+            headerToolbar: {
+              left: 'prev,next',
+              center: 'title',
+              right: isMobile ? 'today' : 'today,dayGridMonth,listMonth'
+            },
+            buttonText: { today: 'วันนี้', month: 'ปฏิทิน', list: 'รายการ' },
+            noEventsText: 'ไม่มีภารกิจในเดือนนี้',
+            datesSet: function(info) {
+              updateMonthHeading(info.view.currentStart);
+            },
+            weekends: false,
+            events: events,
+            height: 'auto',
+            eventContent: function(arg) {
+              var title = document.createElement('div');
+              title.innerText = arg.event.title;
+              title.className = 'event-title-line';
+
+              var wrapper = document.createElement('div');
+              wrapper.appendChild(title);
+
+              if (arg.event.extendedProps.location) {
+                var loc = document.createElement('div');
+                loc.innerText = '📍 ' + arg.event.extendedProps.location;
+                loc.className = 'event-location-line';
+                wrapper.appendChild(loc);
+              }
+
+              return { domNodes: [wrapper] };
+            },
+            eventDidMount: function(arg) {
+              var cat = getCategory(arg.event.title);
+              arg.el.style.borderLeftColor = cat.color;
+              arg.el.style.backgroundColor = cat.bg;
+              var dot = arg.el.querySelector('.fc-list-event-dot');
+              if (dot) dot.style.borderColor = cat.color;
+            },
+            eventClick: function(info) {
+              var details = '📌 งาน: ' + info.event.title + '\n\n';
+              details += '📍 สถานที่: ' + (info.event.extendedProps.location || 'ไม่ได้ระบุ');
+              if (info.event.extendedProps.description) {
+                details += '\n📝 รายละเอียด: ' + info.event.extendedProps.description;
+              }
+              alert(details);
+            },
+            dayCellDidMount: function(arg) {
+              if (isMobile) return;
+              var dateStr = formatDateLocal(arg.date);
+              var count = countEventsOnDate(allEvents, dateStr);
+              var dot = document.createElement('div');
+              dot.className = 'day-status-dot ' + (count === 0 ? 'dot-free' : (count <= 2 ? 'dot-light' : 'dot-busy'));
+              var frame = arg.el.querySelector('.fc-daygrid-day-frame');
+              if (frame) frame.appendChild(dot);
+            }
+          });
+
+          myCalendar.render();
+        })
+        .catch(function(error) {
+          showLoadError('ดึงข้อมูลปฏิทินไม่สำเร็จ: ' + (error && error.message ? error.message : error) +
+            ' — ตรวจสอบว่าลิงก์ API ถูกต้อง และ Deploy เป็น "Anyone" แล้ว');
+        });
+    });
+
+    function showLoadError(message) {
+      var todayBox = document.getElementById('today-events-list');
+      var freeBox = document.getElementById('free-days-list');
+      var calendarEl = document.getElementById('calendar');
+      var m = esc(message);
+      if (todayBox) todayBox.innerHTML = '<p class="no-event-today">⚠️ ' + m + '</p>';
+      if (freeBox) freeBox.innerHTML = '<p class="no-free">⚠️ ' + m + '</p>';
+      if (calendarEl) calendarEl.innerHTML = '<h4 style="text-align:center; color:#c0392b; font-weight: 400;">⚠️ ' + m + '</h4>';
+    }
+
+    function formatDateLocal(d) {
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function countEventsOnDate(events, dateStr) {
+      return events.filter(function(ev) { return ev.start && ev.start.split('T')[0] === dateStr; }).length;
+    }
+
+    function updateMonthHeading(monthStart) {
+      var key = formatDateLocal(monthStart).slice(0, 7);
+      var monthName = monthStart.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+      var count = allEvents.filter(function(ev) { return ev.start && ev.start.slice(0, 7) === key; }).length;
+      document.getElementById('monthHeading').innerHTML =
+        '📋 สรุปตารางงานประจำเดือน' + esc(monthName) + ' ที่ลงนัดหมายแล้ว' +
+        '<small>ทั้งหมด ' + count + ' รายการ</small>';
+    }
+
+    function showTodayDate() {
+      document.getElementById('today-date').textContent =
+        new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    function renderTodaySummary(events) {
+      var box = document.getElementById('today-events-list');
+      var todayStr = formatDateLocal(new Date());
+      var todayEvents = events.filter(function(ev) { return ev.start && ev.start.split('T')[0] === todayStr; });
+      if (todayEvents.length === 0) {
+        box.innerHTML = '<p class="no-event-today">🎉 วันนี้ไม่มีนัดหมาย พักผ่อนได้เต็มที่</p>';
+        return;
+      }
+      var html = '';
+      todayEvents.forEach(function(ev) {
+        var timeStr = ev.allDay
+          ? 'ทั้งวัน'
+          : new Date(ev.start).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+        var locationHtml = ev.location ? '<span class="today-location">📍 ' + esc(ev.location) + '</span>' : '';
+        html += '<div class="today-item">' +
+                  '<span class="today-time">' + esc(timeStr) + '</span>' +
+                  '<div class="today-info">' +
+                    '<span class="today-title">' + esc(ev.title) + '</span>' +
+                    locationHtml +
+                  '</div>' +
+                '</div>';
+      });
+      box.innerHTML = html;
+    }
+
+    function renderFreeDays(events) {
+      var box = document.getElementById('free-days-list');
+      var freeDates = [];
+      var cursor = new Date();
+
+      for (var i = 0; i < 30 && freeDates.length < 5; i++) {
+        var day = cursor.getDay();
+        var dateStr = formatDateLocal(cursor);
+        if (day !== 0 && day !== 6 && countEventsOnDate(events, dateStr) === 0) {
+          freeDates.push(new Date(cursor));
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+
+      if (freeDates.length === 0) {
+        box.innerHTML = '<p class="no-free">ไม่มีวันว่างใน 30 วันข้างหน้า</p>';
+        return;
+      }
+
+      var html = '';
+      freeDates.forEach(function(d) {
+        var label = d.toLocaleDateString('th-TH', {weekday:'short', day:'numeric', month:'short'});
+        html += '<span class="free-chip" onclick="goToDate(\'' + formatDateLocal(d) + '\')">' + label + '</span>';
+      });
+      box.innerHTML = html;
+    }
+
+    function searchEvents() {
+      var query = document.getElementById('searchInput').value.trim().toLowerCase();
+      var resultsBox = document.getElementById('searchResults');
+      if (query === '') { resultsBox.style.display = 'none'; return; }
+      var matches = allEvents.filter(function(ev) { return ev.title && ev.title.toLowerCase().includes(query); });
+      if (matches.length === 0) {
+        resultsBox.innerHTML = '<div class="search-item no-result">ไม่พบงานที่ค้นหา</div>';
+      } else {
+        var html = '';
+        matches.slice(0, 8).forEach(function(ev) {
+          var cat = getCategory(ev.title);
+          var dateStr = new Date(ev.start).toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'2-digit'});
+          var locationHtml = ev.location ? '<span class="search-location">📍 ' + esc(ev.location) + '</span>' : '';
+          html += '<div class="search-item" onclick="goToDate(\'' + esc(ev.start) + '\')">' +
+                    '<span class="search-date">' + dateStr + '</span>' +
+                    '<span class="legend-dot" style="background:' + cat.color + '"></span>' +
+                    '<div class="search-info">' +
+                      '<span class="search-title">' + esc(ev.title) + '</span>' +
+                      locationHtml +
+                    '</div>' +
+                  '</div>';
+        });
+        resultsBox.innerHTML = html;
+      }
+      resultsBox.style.display = 'block';
+    }
+
+    function goToDate(dateStr) {
+      if (myCalendar) myCalendar.gotoDate(dateStr);
+      document.getElementById('searchResults').style.display = 'none';
+      document.getElementById('searchInput').value = '';
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.search-box')) {
+        document.getElementById('searchResults').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
